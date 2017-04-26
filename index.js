@@ -2,9 +2,7 @@
 var FeedParser = require('feedparser')
 var request = require('superagent')
 
-var HOST = 'https://g0v.social'
-
-function crawler (db, url, token, cb) {
+function crawler (host, db, url, token, cb) {
   var parser = new FeedParser()
   parser.once('error', function (err) {
     console.log(err)
@@ -16,7 +14,7 @@ function crawler (db, url, token, cb) {
       lock(item, db, function (err, item) {
         if (err) return
 
-        post(token, {status: item.title + ' ' + item.link}, function (err) {
+        post(host, token, {status: item.title + ' ' + item.link}, function (err) {
           console.log('posted', err)
         })
       })
@@ -36,9 +34,9 @@ function lock (item, db, cb) {
   })
 }
 
-function post (token, msg, cb) {
+function post (host, token, msg, cb) {
   request
-    .post(`${HOST}/api/v1/statuses?access_token=${token}`)
+    .post(`${host}/api/v1/statuses?access_token=${token}`)
     .type('form')
     .send({status: msg.status})
     .end(function (err, res) {
@@ -50,6 +48,6 @@ var argv = require('minimist')(process.argv.slice(2))
 var level = require('level')
 var db = level('./rss2mastodon.db')
 
-crawler(db, argv.url, argv.token, function (err) {
+crawler(argv.host, db, argv.url, argv.token, function (err) {
   console.log('done')
 })

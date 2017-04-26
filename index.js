@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 var FeedParser = require('feedparser')
 var request = require('superagent')
 

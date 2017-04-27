@@ -14,7 +14,10 @@ function crawler (host, db, url, token, cb) {
       lock(item, db, function (err, item) {
         if (err) return
 
-        post(host, token, {status: item.title + ' ' + item.link}, function (err) {
+        var status = [item.title]
+        if (item.summary) status.push(item.summary)
+        status.push(item.link)
+        post(host, token, {status: status.join('\n')}, function (err) {
           console.log('posted', err)
         })
       })

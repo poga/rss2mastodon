@@ -41,6 +41,9 @@ function crawler (host, db, url, token, bufferSize, cb) {
 }
 
 function lock (item, db, cb) {
+  if (dry) {
+    return cb(null, item)
+  }
   db.get(item.guid, function (err) {
     if (err && err.notFound) {
       db.put(item.guid, '1')

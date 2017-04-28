@@ -2,8 +2,11 @@
 var FeedParser = require('feedparser')
 var request = require('superagent')
 
-function crawler (host, db, url, token, cb) {
+var dry = false
+
+function crawler (host, db, url, token, bufferSize, cb) {
   var parser = new FeedParser()
+  var buffer = []
   parser.once('error', function (err) {
     console.log(err)
   })
@@ -17,9 +20,20 @@ function crawler (host, db, url, token, cb) {
         var status = [item.title]
         if (item.summary) status.push(item.summary)
         status.push(item.link)
-        post(host, token, {status: status.join('\n')}, function (err) {
-          console.log('posted', err)
-        })
+        buffer.push(status.join('\n'))
+        if (!bufferSize || buffer.length >= bufferSize) {
+          post(host, token, {status: buffer.join('\n\n')}, function (err) {
+            console.log('posted', err)
+          })
+          buffer = []
+        }
+      })
+    }
+  })
+  parser.on('end', function () {
+    if (buffer.length > 0) {
+      post(host, token, {status: buffer.join('\n\n')}, function (err) {
+        console.log('posted', err)
       })
     }
   })
@@ -38,6 +52,10 @@ function lock (item, db, cb) {
 }
 
 function post (host, token, msg, cb) {
+  if (dry) {
+    console.log('posting', msg)
+    return cb()
+  }
   request
     .post(`${host}/api/v1/statuses?access_token=${token}`)
     .type('form')
@@ -51,6 +69,9 @@ var argv = require('minimist')(process.argv.slice(2))
 var level = require('level')
 var db = level('./rss2mastodon.db')
 
-crawler(argv.host, db, argv.url, argv.token, function (err) {
+dry = argv.dry
+
+crawler(argv.host, db, argv.url, argv.token, argv.bufferSize, function (err) {
+  if (err) throw err
   console.log('done')
 })

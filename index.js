@@ -1,12 +1,13 @@
 #! /usr/bin/env node
 var FeedParser = require('feedparser')
 var request = require('superagent')
+var async = require('async')
 
 var dry = false
 
 function crawler (host, db, url, token, bufferSize, cb) {
   var parser = new FeedParser()
-  var buffer = []
+  var tasks = []
   parser.once('error', function (err) {
     console.log(err)
   })
@@ -14,67 +15,48 @@ function crawler (host, db, url, token, bufferSize, cb) {
     var stream = this
     var item
     while (item = stream.read()) {
-      lock(item, db, function (err, item) {
-        if (err) return
-
-        var status = [item.title]
-        if (item.summary) status.push(item.summary)
-        status.push(item.link)
-        buffer.push(status.join('\n'))
-        if (!bufferSize || buffer.length >= bufferSize) {
-          post(host, token, {status: buffer.join('\n\n')}, function (err) {
-            console.log('posted', err)
-          })
-          buffer = []
-        }
-      })
+      tasks.push(postTask(db, host, token, item))
     }
   })
   parser.on('end', function () {
-    if (buffer.length > 0) {
-      post(host, token, {status: buffer.join('\n\n')}, function (err) {
-        console.log('posted', err)
-      })
-    }
+    console.log(tasks.length)
+    async.series(tasks, function (err) {
+      if (err) throw err
+
+      cb()
+    })
   })
   request(url).pipe(parser)
 }
 
-function lock (item, db, cb) {
-  if (dry) {
-    return cb(null, item)
-  }
-  db.get(item.guid, function (err) {
-    if (err && err.notFound) {
-      db.put(item.guid, '1')
-      cb(null, item)
-    } else {
-      cb(new Error('existed'))
-    }
-  })
-}
-
-function post (host, token, msg, cb) {
-  if (dry) {
-    console.log('posting', msg)
-    return cb()
-  }
-  request
-    .post(`${host}/api/v1/statuses?access_token=${token}`)
-    .type('form')
-    .send({status: msg.status})
-    .end(function (err, res) {
-      if (err) return cb(err)
+function postTask (db, host, token, item) {
+  return cb => {
+    db.get(item.guid, function (err) {
+      if (err && err.notFound) {
+        db.put(item.guid, '1')
+        post()
+      } else {
+        cb()
+      }
     })
+
+    function post () {
+      request
+      .post(`${host}/api/v1/statuses`)
+      .query({access_token: token})
+      .type('form')
+      .send({status: [item.title, item.summary, item.link].join('\n')})
+      .end(function (err, res) {
+        if (err) return cb(err)
+      })
+    }
+  }
 }
 
 var argv = require('minimist')(process.argv.slice(2))
 var level = require('level')
 var db = level('./rss2mastodon.db')
 
-dry = argv.dry
-
-crawler(argv.host, db, argv.url, argv.token, argv.bufferSize, function (err) {
+crawler(argv.host, db, argv.url, argv.token, function (err) {
   if (err) throw err
-  console.log('done')
 })

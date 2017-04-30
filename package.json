@@ -15,6 +15,7 @@
   "author": "Poga Po<poga.bahamut@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.4.0",
     "feedparser": "^2.2.0",
     "level": "^1.6.0",
     "minimist": "^1.2.0",

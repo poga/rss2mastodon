@@ -17,7 +17,6 @@ function crawler (host, db, url, token, cb) {
     }
   })
   parser.on('end', function () {
-    console.log(tasks.length)
     async.series(tasks, function (err) {
       if (err) throw err
 

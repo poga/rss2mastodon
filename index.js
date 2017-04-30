@@ -3,9 +3,7 @@ var FeedParser = require('feedparser')
 var request = require('superagent')
 var async = require('async')
 
-var dry = false
-
-function crawler (host, db, url, token, bufferSize, cb) {
+function crawler (host, db, url, token, cb) {
   var parser = new FeedParser()
   var tasks = []
   parser.once('error', function (err) {

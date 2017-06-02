@@ -39,13 +39,15 @@ function postTask (db, host, token, item) {
 
     function post () {
       request
-      .post(`${host}/api/v1/statuses`)
-      .query({access_token: token})
-      .type('form')
-      .send({status: [item.title, item.summary, item.link].join('\n')})
-      .end(function (err, res) {
-        if (err) return cb(err)
-      })
+        .post(`${host}/api/v1/statuses`)
+        .query({ access_token: token })
+        .type('form')
+        .send({ status: [item.title, item.summary, item.link].join('\n') })
+        .end(function (err, res) {
+          if (err) return cb(err)
+
+          cb()
+        })
     }
   }
 }

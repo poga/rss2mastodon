@@ -3,6 +3,8 @@ var FeedParser = require('feedparser')
 var request = require('superagent')
 var async = require('async')
 
+var UNLISTED
+
 function crawler (host, db, url, token, cb) {
   var parser = new FeedParser()
   var tasks = []
@@ -42,7 +44,10 @@ function postTask (db, host, token, item) {
         .post(`${host}/api/v1/statuses`)
         .query({ access_token: token })
         .type('form')
-        .send({ status: [item.title, item.summary, item.link].join('\n') })
+        .send({
+          status: [item.title, item.summary, item.link].join('\n'),
+          visibility: UNLISTED ? 'unlisted' : 'public'
+        })
         .end(function (err, res) {
           if (err) return cb(err)
 
@@ -55,6 +60,8 @@ function postTask (db, host, token, item) {
 var argv = require('minimist')(process.argv.slice(2))
 var level = require('level')
 var db = level('./rss2mastodon.db')
+
+UNLISTED = argv.unlisted
 
 crawler(argv.host, db, argv.url, argv.token, function (err) {
   if (err) throw err

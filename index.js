@@ -45,11 +45,14 @@ function postTask (db, host, token, item) {
         .query({ access_token: token })
         .type('form')
         .send({
-          status: [item.title, item.summary, item.link].join('\n'),
+          status: [item.title, item.link].join('\n'),
           visibility: UNLISTED ? 'unlisted' : 'public'
         })
         .end(function (err, res) {
-          if (err) return cb(err)
+          if (err) {
+            console.log(res.body)
+            return cb(err)
+          }
 
           cb()
         })

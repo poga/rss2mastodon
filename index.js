@@ -62,7 +62,7 @@ function postTask (db, host, token, item) {
 
 var argv = require('minimist')(process.argv.slice(2))
 var level = require('level')
-var db = level('./rss2mastodon.db')
+var db = level(argv.db || './rss2mastodon.db')
 
 UNLISTED = argv.unlisted
 

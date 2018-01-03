@@ -50,7 +50,6 @@ function postTask (db, host, token, item) {
         })
         .end(function (err, res) {
           if (err) {
-            console.log(res.body)
             return cb(err)
           }
 

@@ -2,6 +2,10 @@
 
 publish a rss feed to mastodon
 
+## Install
+
+`npm i rss2mastodon`
+
 ## Usage
 
 ```bash

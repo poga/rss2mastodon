@@ -12,6 +12,8 @@ publish a rss feed to mastodon
 $ rss2mastodon --host https://g0v.social --url FEED_URL --token MASTODON_TOKEN [--db DB_NAME]
 ```
 
+You might want to run `rss2mastodon` periodically with cron.
+
 #### command line arguments
 
 * host: mastodon instance's URL.
